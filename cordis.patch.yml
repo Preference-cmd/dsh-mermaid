@@ -1,0 +1,7 @@
+# One row: the bare package name. Its manifest carries both halves —
+# `exports["."]` is the Host tool plugin and `dsh.client` + `exports["./client"]`
+# are the browser half the client module table scans into the Web shell.
+
+- insert:
+    - id: mermaid-diagrams
+      name: 'dsh-mermaid'
