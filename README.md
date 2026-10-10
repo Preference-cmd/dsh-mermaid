@@ -5,7 +5,7 @@ Model-facing Mermaid diagrams for DeepSeek Harness: a `mermaid_render` tool plus
 ## Install
 
 ```sh
-dsh plugin --profile web add github:<owner>/dsh-mermaid
+dsh plugin --profile web add github:Preference-cmd/dsh-mermaid
 ```
 
 Restart the profile afterwards. The package ships built artifacts, so pnpm needs no build permission.
