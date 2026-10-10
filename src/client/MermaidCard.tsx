@@ -5,31 +5,35 @@ import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { NS } from './locales.ts'
 
+/** The settled result node the `result` phase carries. */
+type ToolResultBlock = Extract<ToolCallViewProps, { phase: 'result' }>['block']
+
 /** Persisted `output.presentationMeta` this card reads; replay data arrives unvalidated. */
 function metaSource(meta: unknown): string | null {
   if (typeof meta !== 'object' || meta === null) return null
   const source = (meta as Record<string, unknown>).source
-  return typeof source === 'string' && source.length > 0 ? source : null
+  return typeof source === 'string' && source.trim().length > 0 ? source : null
 }
 
-/**
- * Flatten a settled result's text blocks under the generic Tool-row text
- * contract, keeping the fenced `mermaid` block the Host rendered.
- */
-function resultText(block: ToolCallViewProps['block']): string | null {
-  if (block.phase !== 'result') return null
+/** Flatten a settled result's text blocks under the generic Tool-row text contract. */
+function resultText(node: ToolResultBlock): string | null {
   const parts: string[] = []
-  for (const item of block.block.content) {
+  for (const item of node.content) {
     if (item.type === 'text') parts.push(item.text)
   }
   const text = parts.join('\n')
-  return text.length === 0 ? null : text
+  return text.trim().length === 0 ? null : text
 }
 
-/** The diagram source: persisted metadata first, the rendered result text otherwise. */
-function diagramSource(block: ToolCallViewProps['block']): string | null {
-  if (block.phase !== 'result') return null
-  return metaSource(block.block.meta) ?? resultText(block)
+/**
+ * The Markdown the shared renderer draws: its Mermaid fence support consumes a
+ * fenced block, while `presentationMeta` carries the bare diagram source and
+ * the generic result text is already fenced.
+ */
+function markdownSource(node: ToolResultBlock): string | null {
+  const source = metaSource(node.meta) ?? resultText(node)
+  if (source === null) return null
+  return source.includes('```') ? source : `\`\`\`mermaid\n${source.trimEnd()}\n\`\`\``
 }
 
 /**
@@ -48,7 +52,7 @@ export function MermaidCard(props: ToolCallViewProps & PropsLocale<typeof NS>): 
   } as MarkdownLabels
   if (phase === 'preparing') return <div>{t('preparing')}</div>
   if (phase === 'start') return <div>{t('running')}</div>
-  const source = diagramSource(props.block)
+  const source = markdownSource(props.block)
   if (source === null) return null
   return <MarkdownText text={source} labels={labels} />
 }
