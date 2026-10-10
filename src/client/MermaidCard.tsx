@@ -39,11 +39,13 @@ function diagramSource(block: ToolCallViewProps['block']): string | null {
  */
 export function MermaidCard(props: ToolCallViewProps & PropsLocale<typeof NS>): ReactNode {
   const { t, phase } = props
-  const labels: MarkdownLabels = {
+  // The client's Mermaid fence support reads `labels.mermaid`; the published
+  // MarkdownLabels type predates that field, so the object is asserted.
+  const labels = {
     code: { copyLabel: t('copy'), copiedLabel: t('copied') },
     footnotes: t('footnotes'),
     mermaid: { zoomIn: t('zoomIn'), zoomOut: t('zoomOut'), reset: t('reset') },
-  }
+  } as MarkdownLabels
   if (phase === 'preparing') return <div>{t('preparing')}</div>
   if (phase === 'start') return <div>{t('running')}</div>
   const source = diagramSource(props.block)

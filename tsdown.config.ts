@@ -30,16 +30,19 @@ export default defineConfig([
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',
-    external: ['@deepseek-ai/dsh-tools', '@deepseek-ai/cordis'],
+    deps: { neverBundle: ['@deepseek-ai/dsh-tools', '@deepseek-ai/cordis'] },
     dts: false,
     clean: false,
+    outputOptions: {
+      entryFileNames: 'index.js',
+    },
   },
   {
     entry: ['src/client/index.ts'],
     outDir: 'lib',
     format: ['cjs'],
     platform: 'browser',
-    external: [...PLATFORM_MODULES],
+    deps: { neverBundle: [...PLATFORM_MODULES] },
     dts: false,
     clean: false,
     outputOptions: {
