@@ -13,12 +13,14 @@ dsh plugin --profile web add github:Preference-cmd/dsh-mermaid
 
 安装后重启该 profile。包内自带构建产物，pnpm 无需构建权限。
 
-## 贡献内容
+## 它做了什么
 
-- **宿主侧**：`mermaid_render` 工具（无解析器、无无头浏览器）。它接受图源和一个可选的简短 `title`（≤ 200 个字符）为图表命名；拒绝空图，把图源原样以 ```mermaid 围栏返回，并发布 `output.presentationMeta = { source, title? }` 供回放稳定的卡片使用。标题用于命名转录卡片的过程行、回合末尾行和查看器标签页；未传参数时，图表自己的 frontmatter `title:` 会补位。
-- **浏览器侧**：`mermaid_render` 的键控 `tool.call.toolview` 卡片。它先把图源交给共享的 `MarkdownText` 渲染器——带 Mermaid 围栏支持的客户端会直接画出图表，并贡献自己的缩放/平移视口。“在视图中打开”按钮会打开右侧边栏的查看器标签页：图表占满整个窗格，自带缩放与平移（滚轮、拖拽和工具栏；缩放锚定在指针或窗格中心）。标签页按 Session 与工具调用寻址，重开同一调用的图表会聚焦它已有的标签页。
-- **浏览器侧，回合末尾**：一个 state-only 的 conversation Definition 把已记录的 `mermaid_render` 调用与其 append-origin 结果配对并按回合发布；`conversation.chat.turnTail` 行在回合收尾消息之后为每张定稿图表渲染一条紧凑条目——这正是产物式的表面，图表在这里保持可见，无需展开过程流。不记录任何新事件：回合末尾从会话日志回放。
-- **浏览器侧，回退渲染**：把 ```mermaid 围栏渲染为普通代码块的客户端——上游 DSH 就是如此——会改用卡片自带的渲染器画图。引擎作为包内 `lib/client.mermaid.js` chunk（约 3.5 MB，内联并压缩）随包发布，只在第一张图绘制时经客户端模块系统的 `require.async` 拉取，永不进入页面 bundle。组装好的 SVG 以 React 元素（而非标记串）进入 React：引擎在 `securityLevel: 'strict'` 下净化输出，DOM-to-React 映射丢弃所有 `on*` 属性和 `javascript:` URL，没有任何内容走 `dangerouslySetInnerHTML`。
+- **`mermaid_render` 工具**（宿主侧）：接受图源和可选的短 `title`，原样返回 ```mermaid 围栏，并把 `{ source, title? }` 持久化到结果元数据里，重放时按同一来源重绘；无解析器、无无头浏览器。
+- **转录卡片**（浏览器侧）：先把图源交给客户端的围栏渲染器，客户端不支持时用自带引擎绘制。SVG 以 React 元素进入页面——引擎在 `securityLevel: 'strict'` 下净化输出，丢弃全部 `on*` 属性与 `javascript:` URL，不使用 `dangerouslySetInnerHTML`。
+- **回合末尾产物行**（浏览器侧）：从会话日志回放已定稿的图，按标题常驻在回合收尾消息之后，不展开过程流也可见。
+- **侧栏查看器**（浏览器侧）：点“在视图中打开”进入右侧边栏大画布，滚轮缩放、拖拽平移；同一调用的图重复打开会聚焦同一个标签页。
+
+![回合末尾的产物行（左下）与右侧边栏查看器](assets/turn-tail-viewer.png)
 
 ## 已知限制
 
