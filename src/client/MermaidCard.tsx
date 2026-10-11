@@ -15,7 +15,18 @@ import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { DiagramView } from './diagram.tsx'
+import { diagramTitle, type MermaidViewDocument } from './viewer.tsx'
 import { NS } from './locales.ts'
+
+/** The business face the card registration injects beside its framework props. */
+export interface MermaidCardInjected {
+  /**
+   * Open the diagram in the right-Sidebar viewer tab.
+   * @param callId - the settled `mermaid_render` invocation the card shows.
+   * @param document - the diagram source and its derived title.
+   */
+  openViewer(callId: string, document: MermaidViewDocument): void
+}
 
 /** The settled result node the `result` phase carries. */
 type ToolResultBlock = Extract<ToolCallViewProps, { phase: 'result' }>['block']
@@ -77,9 +88,10 @@ function bareSource(node: ToolResultBlock): string | null {
 /**
  * Keyed `tool.call.toolview` card for `mermaid_render`: it hands the settled
  * fenced source to the shared Markdown renderer, whose Mermaid fence support
- * draws the diagram (and, where the client exposes it, the zoom viewport).
+ * draws the diagram (and, where the client exposes it, the zoom viewport), and
+ * offers the right-Sidebar viewer for a large pan/zoom surface.
  */
-export function MermaidCard(props: ToolCallViewProps & PropsLocale<typeof NS>): ReactNode {
+export function MermaidCard(props: ToolCallViewProps & PropsLocale<typeof NS> & MermaidCardInjected): ReactNode {
   const { t, phase } = props
   // The client's Mermaid fence support reads `labels.mermaid`; the published
   // MarkdownLabels type predates that field, so the object is asserted.
@@ -92,15 +104,40 @@ export function MermaidCard(props: ToolCallViewProps & PropsLocale<typeof NS>): 
   if (phase === 'start') return <div>{t('running')}</div>
   const source = bareSource(props.block)
   if (source === null) return null
+  const open = (): void => {
+    props.openViewer(props.callId, { source, title: diagramTitle(source) })
+  }
   return (
-    <Diagram
-      source={source}
-      labels={labels}
-      copyLabel={t('copy')}
-      copiedLabel={t('copied')}
-    />
+    <div>
+      <div style={VIEWER_ROW_STYLE}>
+        <button type="button" style={VIEWER_BUTTON_STYLE} onClick={open}>{t('openViewer')}</button>
+      </div>
+      <Diagram
+        source={source}
+        labels={labels}
+        copyLabel={t('copy')}
+        copiedLabel={t('copied')}
+      />
+    </div>
   )
 }
+
+/** The card's viewer affordance hugs the diagram's top-right corner. */
+const VIEWER_ROW_STYLE = { display: 'flex', justifyContent: 'flex-end' } as const
+
+/** The viewer affordance stays quiet beside the diagram it opens. */
+const VIEWER_BUTTON_STYLE = {
+  boxSizing: 'border-box',
+  height: 24,
+  padding: '0 8px',
+  border: '0.5px solid var(--dsw-alias-border-l1, #ccc)',
+  borderRadius: 8,
+  background: 'transparent',
+  color: 'inherit',
+  font: 'inherit',
+  fontSize: 12,
+  cursor: 'pointer',
+} as const
 
 /**
  * Draw one diagram, preferring the client's own fence renderer.

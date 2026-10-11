@@ -10,6 +10,11 @@ export declare const zh: {
     zoomIn: string;
     zoomOut: string;
     reset: string;
+    openViewer: string;
+    viewerTitle: string;
+    viewerLoading: string;
+    viewerFailed: string;
+    viewerExpired: string;
 };
 /** Every key the card translates. */
 export type MermaidKey = keyof typeof zh;
@@ -23,4 +28,9 @@ export declare const en: {
     zoomIn: string;
     zoomOut: string;
     reset: string;
+    openViewer: string;
+    viewerTitle: string;
+    viewerLoading: string;
+    viewerFailed: string;
+    viewerExpired: string;
 };
