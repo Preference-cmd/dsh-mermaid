@@ -55,18 +55,23 @@ interface MermaidTailState {
 }
 
 /**
- * The diagram source of one settled result: the host's `presentationMeta`
- * when present, otherwise the fenced block the tool returns as its text.
+ * The document of one settled result: the host's `presentationMeta` (source and
+ * title) when present, otherwise the fenced block the tool returns as its text
+ * with a source-level frontmatter title. Shared with the transcript card.
  * @param data - the recorded `tool/result` payload.
- * @returns the bare source, or null when the result carries no diagram.
+ * @returns the bare document, or null when the result carries no diagram.
  */
-function resultSource(data: {
+export function resultDocument(data: {
   readonly meta?: unknown
   readonly message: { readonly content: ReadonlyArray<{ readonly type: string; readonly text?: string }> }
-}): string | null {
+}): MermaidViewDocument | null {
   if (typeof data.meta === 'object' && data.meta !== null) {
-    const source = (data.meta as Record<string, unknown>).source
-    if (typeof source === 'string' && source.trim().length > 0) return source
+    const record = data.meta as Record<string, unknown>
+    const source = typeof record.source === 'string' && record.source.trim().length > 0 ? record.source : null
+    if (source !== null) {
+      const title = typeof record.title === 'string' && record.title.trim().length > 0 ? record.title.trim() : undefined
+      return { source, title: title ?? diagramTitle(source) }
+    }
   }
   const text = data.message.content
     .filter(part => part.type === 'text' && typeof part.text === 'string')
@@ -75,7 +80,8 @@ function resultSource(data: {
     .trim()
   if (text.length === 0) return null
   const fenced = /^```mermaid\r?\n([\s\S]*?)\r?\n?```$/.exec(text)
-  return fenced === null ? text : fenced[1]
+  const source = fenced === null ? text : fenced[1]
+  return { source, title: diagramTitle(source) }
 }
 
 /**
@@ -109,11 +115,11 @@ export const mermaidTailDefinition: ConversationNodeDefinition<MermaidTailState>
     if (event.type !== 'tool/result') return context.state
     const callId = String(event.data.message.source.callId)
     if (!context.state.calls.has(callId) || event.data.message.isError === true) return context.state
-    const source = resultSource(event.data)
-    if (source === null || context.state.diagrams.some(entry => entry.callId === callId)) return context.state
+    const document = resultDocument(event.data)
+    if (document === null || context.state.diagrams.some(entry => entry.callId === callId)) return context.state
     return {
       ...context.state,
-      diagrams: [...context.state.diagrams, { callId, source, title: diagramTitle(source) }],
+      diagrams: [...context.state.diagrams, { callId, ...document }],
     }
   },
   buildLocationData: (context, scope, previous) => {

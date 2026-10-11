@@ -45,6 +45,22 @@ interface MermaidTailState {
     readonly diagrams: readonly MermaidDiagramEntry[];
 }
 /**
+ * The document of one settled result: the host's `presentationMeta` (source and
+ * title) when present, otherwise the fenced block the tool returns as its text
+ * with a source-level frontmatter title. Shared with the transcript card.
+ * @param data - the recorded `tool/result` payload.
+ * @returns the bare document, or null when the result carries no diagram.
+ */
+export declare function resultDocument(data: {
+    readonly meta?: unknown;
+    readonly message: {
+        readonly content: ReadonlyArray<{
+            readonly type: string;
+            readonly text?: string;
+        }>;
+    };
+}): MermaidViewDocument | null;
+/**
  * Turn-scoped settled-diagram accumulator; it publishes no view Node.
  * Root calls only, matching the file-delivery Definition's scope: PTC
  * dispatch children do not enter independently.

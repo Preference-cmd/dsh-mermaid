@@ -15,6 +15,7 @@ import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { DiagramView } from './diagram.tsx'
+import { resultDocument } from './tail.tsx'
 import { diagramTitle, type MermaidViewDocument } from './viewer.tsx'
 import { NS } from './locales.ts'
 
@@ -73,16 +74,18 @@ function resultText(node: ToolResultBlock): string | null {
 }
 
 /**
- * The bare diagram source: `presentationMeta.source` when the host published
- * it, otherwise the result text with its own ```mermaid fence removed.
+ * The settled document: `presentationMeta` (the host persists it under the
+ * result node's `meta`) when it carries a source, otherwise the result text
+ * with its own ```mermaid fence removed.
  */
-function bareSource(node: ToolResultBlock): string | null {
-  const meta = metaSource(node)
-  if (meta !== null) return meta
+function bareDocument(node: ToolResultBlock): MermaidViewDocument | null {
+  const meta = metaSource(node.meta)
+  if (meta !== null) return { source: meta, title: diagramTitle(meta) }
   const text = resultText(node)
   if (text === null) return null
   const fenced = /^```mermaid\r?\n([\s\S]*?)\r?\n?```$/.exec(text.trim())
-  return fenced === null ? text : fenced[1]
+  const source = fenced === null ? text : fenced[1]
+  return { source, title: diagramTitle(source) }
 }
 
 /**
@@ -102,18 +105,15 @@ export function MermaidCard(props: ToolCallViewProps & PropsLocale<typeof NS> & 
   } as MarkdownLabels
   if (phase === 'preparing') return <div>{t('preparing')}</div>
   if (phase === 'start') return <div>{t('running')}</div>
-  const source = bareSource(props.block)
-  if (source === null) return null
-  const open = (): void => {
-    props.openViewer(props.callId, { source, title: diagramTitle(source) })
-  }
+  const document = bareDocument(props.block)
+  if (document === null) return null
   return (
     <div>
       <div style={VIEWER_ROW_STYLE}>
-        <button type="button" style={VIEWER_BUTTON_STYLE} onClick={open}>{t('openViewer')}</button>
+        <button type="button" style={VIEWER_BUTTON_STYLE} onClick={() => props.openViewer(props.callId, document)}>{t('openViewer')}</button>
       </div>
       <Diagram
-        source={source}
+        source={document.source}
         labels={labels}
         copyLabel={t('copy')}
         copiedLabel={t('copied')}

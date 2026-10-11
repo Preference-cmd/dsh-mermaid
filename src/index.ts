@@ -4,6 +4,9 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 export const name = 'tool-mermaid'
 export const inject = ['tools']
 
+/** The longest diagram title the tool accepts; longer names get their own diagram text instead. */
+const MAX_TITLE_LENGTH = 200
+
 /** Register the model-facing `mermaid_render` tool on the profile's tool registry.
  * @param ctx - Host plugin context; `tools` is ready because of {@link inject}.
  */
@@ -17,6 +20,10 @@ export function apply(ctx: Context): void {
         required: true,
         description: 'The Mermaid diagram source code.',
       },
+      title: {
+        type: 'string',
+        description: `A short title naming the diagram (at most ${MAX_TITLE_LENGTH} characters), shown beside it in the transcript tail and its viewer.`,
+      },
     },
     output: {
       schema: {
@@ -24,6 +31,7 @@ export function apply(ctx: Context): void {
         additionalProperties: true,
         properties: {
           diagram: { type: 'string' },
+          title: { type: 'string' },
         },
       },
       render: (_args, value) => [{
@@ -34,16 +42,21 @@ export function apply(ctx: Context): void {
       }],
       presentationMeta: (_args, value) => ({
         source: typeof value.diagram === 'string' ? value.diagram : '',
+        ...(typeof value.title === 'string' && value.title.trim().length > 0 ? { title: value.title.trim() } : {}),
       }),
     },
     execute(args) {
       const diagram = args.diagram
       if (diagram.trim().length === 0) throw new Error('mermaid_render: diagram must not be empty')
-      return Promise.resolve({ diagram })
+      const rawTitle = args.title?.trim()
+      if (rawTitle !== undefined && rawTitle !== '' && rawTitle.length > MAX_TITLE_LENGTH) {
+        throw new Error(`mermaid_render: title must be at most ${MAX_TITLE_LENGTH} characters; give the diagram its own source-level title instead`)
+      }
+      return Promise.resolve({ diagram, ...(rawTitle !== undefined && rawTitle !== '' ? { title: rawTitle } : {}) })
     },
     presentCall: args => ({
       card: 'generic',
-      title: 'Render Mermaid diagram',
+      title: args.title !== undefined && args.title.trim() !== '' ? args.title.trim() : 'Render Mermaid diagram',
       kind: 'other',
       rawInput: args.diagram,
     }),
