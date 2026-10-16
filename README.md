@@ -1,7 +1,7 @@
 # dsh-mermaid
 
 <!-- Bump the badge with the @deepseek-ai/dsh-tools peerDependency. -->
-[![DeepSeek Harness ≥ 0.2.1-alpha.4](https://img.shields.io/badge/DeepSeek_Harness-%E2%89%A5%200.2.1--alpha.4-5b6ee1)](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-alpha.4)
+[![DeepSeek Harness ≥ 0.2.1-alpha.2](https://img.shields.io/badge/DeepSeek_Harness-%E2%89%A5%200.2.1--alpha.2-5b6ee1)](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-alpha.2)
 [![MIT license](https://img.shields.io/github/license/Preference-cmd/dsh-mermaid)](./LICENSE)
 
 面向 DeepSeek Harness 的 Mermaid 图表插件：模型经 `mermaid_render` 工具出图，图表以“会话中产物”常驻回合末尾，点开即得右侧边栏的缩放大画布。单包发布、自带渲染引擎，上游 DSH 无需任何改动。
