@@ -41,6 +41,9 @@ importers:
       '@deepseek-ai/dsh-tools':
         specifier: ^0.2.1-rc.2
         version: 0.2.1-rc.2(53871834bb50b7f532ec7289e680bbda)
+      '@types/node':
+        specifier: ^22.20.1
+        version: 22.20.5
       '@types/react':
         specifier: ^19.2.0
         version: 19.3.0
@@ -476,6 +479,9 @@ packages:
 
   '@types/geojson@7946.0.16':
     resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
+
+  '@types/node@22.20.5':
+    resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
 
   '@types/react@19.3.0':
     resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
@@ -1048,6 +1054,9 @@ packages:
   unconfig-core@7.5.0:
     resolution: {integrity: sha512-Su3FauozOGP44ZmKdHy2oE6LPjk51M/TRRjHv2HNCWiDvfvCoxC2lno6jevMA91MYAdCdwP05QnWdWpSbncX/w==}
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   uuid@14.0.2:
     resolution: {integrity: sha512-xZe/16rV4aa+HGSOCiY2YeLT1OybRLrrkL/Rqaq7p7GMVXjFh+6wN4oMYgjFmnSnhY8t6Xpdl2l9qmnHYuMHwQ==}
     hasBin: true
@@ -1453,6 +1462,10 @@ snapshots:
       '@types/d3-zoom': 3.0.9
 
   '@types/geojson@7946.0.16': {}
+
+  '@types/node@22.20.5':
+    dependencies:
+      undici-types: 6.21.0
 
   '@types/react@19.3.0':
     dependencies:
@@ -1942,6 +1955,8 @@ snapshots:
     dependencies:
       '@quansync/fs': 1.1.0
       quansync: 1.0.0
+
+  undici-types@6.21.0: {}
 
   uuid@14.0.2: {}
 
