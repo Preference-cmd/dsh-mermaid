@@ -45,8 +45,8 @@
     "verify:build-output": "node scripts/verify-build-output.mjs"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.5-alpha.1",
-    "@deepseek-ai/dsh-tools": ">=0.2.1-alpha.2"
+    "@deepseek-ai/cordis": "^4.0.5-alpha.1 || ^4.0.6-alpha.1",
+    "@deepseek-ai/dsh-tools": ">=0.2.1-alpha.2 || ^0.2.2-alpha.2"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.5",
