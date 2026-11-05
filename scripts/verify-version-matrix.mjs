@@ -11,6 +11,12 @@
  * The plugin's own manifest and lockfile are restored afterwards, so a run
  * leaves the checkout as it found it.
  *
+ * The check also asserts that the plugin's own peer ranges admit each
+ * candidate. A peer range that rejects a host the plugin claims to support
+ * makes the plugin uninstallable there, and the typecheck alone cannot see
+ * it: the root project's peer dependencies are not resolved against its own
+ * installed packages.
+ *
  * Run with `node scripts/verify-version-matrix.mjs`; set DSH_MATRIX_ONLY to a
  * version to check a single candidate.
  */
@@ -18,8 +24,18 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import semver from 'semver'
 
 const root = resolve(import.meta.dirname, '..')
+
+/** The peer ranges the plugin declares, read from its own manifest. */
+const peers = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')).peerDependencies
+
+/**
+ * The harness release after the supported 0.2 line. The peer range must stop
+ * at it: a 0.x package's API can break between minors.
+ */
+const NEXT_MINOR = '0.3.0'
 
 /** The published harness versions the plugin supports, with the Cordis release each one requires. */
 const VERSIONS = [
@@ -89,6 +105,23 @@ function writeWorkspace(dsh, cordis, exclude) {
 }
 
 /**
+ * Report whether the declared peer ranges admit a harness release.
+ * @param {string} dsh - The harness release.
+ * @param {string} cordis - The Cordis release that harness line requires.
+ * @returns {string|null} The conflicts, or null when the ranges admit it.
+ */
+function peerConflict(dsh, cordis) {
+  const problems = []
+  if (!semver.satisfies(dsh, peers['@deepseek-ai/dsh-tools'])) {
+    problems.push(`the @deepseek-ai/dsh-tools peer range "${peers['@deepseek-ai/dsh-tools']}" rejects ${dsh}`)
+  }
+  if (!semver.satisfies(cordis, peers['@deepseek-ai/cordis'])) {
+    problems.push(`the @deepseek-ai/cordis peer range "${peers['@deepseek-ai/cordis']}" rejects ${cordis}`)
+  }
+  return problems.length === 0 ? null : problems.join('\n')
+}
+
+/**
  * Run the typecheck against the installed harness packages.
  * @returns {string} The compiler output, empty when the check passed.
  */
@@ -116,10 +149,22 @@ const originalWorkspace = readFileSync(workspacePath, 'utf8')
 const originalLock = readFileSync(lockPath, 'utf8')
 const results = []
 
+// The range has to stop at the next minor: a 0.x package's API can break
+// between minors, and an unbounded range would admit hosts the plugin never
+// met.
+const boundary = semver.satisfies(NEXT_MINOR, peers['@deepseek-ai/dsh-tools'])
+  ? `the @deepseek-ai/dsh-tools peer range "${peers['@deepseek-ai/dsh-tools']}" admits ${NEXT_MINOR}`
+  : null
+
 try {
   let exclude = excludeEntries(originalWorkspace)
   for (const [dsh, cordis] of candidates) {
     writeWorkspace(dsh, cordis, exclude)
+    const conflict = peerConflict(dsh, cordis)
+    if (conflict !== null) {
+      results.push({ dsh, cordis, outcome: 'peer range rejects the candidate', detail: conflict })
+      continue
+    }
     try {
       // The overrides make the lockfile stale by construction, so the frozen
       // install pnpm turns on under CI has to be turned off explicitly.
@@ -151,6 +196,7 @@ for (const result of results) {
   console.log(`| ${result.dsh} | ${result.cordis} | ${result.outcome} |`)
 }
 const failures = results.filter(result => result.outcome !== 'typecheck passed')
+if (boundary !== null) failures.push({ dsh: NEXT_MINOR, cordis: '-', outcome: 'peer range is unbounded', detail: boundary })
 if (failures.length > 0) {
   console.error('')
   for (const failure of failures) {
@@ -159,4 +205,4 @@ if (failures.length > 0) {
   }
   process.exit(1)
 }
-console.log(`verify-version-matrix: ${results.length} harness version(s) typecheck cleanly.`)
+console.log(`verify-version-matrix: ${results.length} harness version(s) typecheck cleanly, and the peer ranges admit them.`)

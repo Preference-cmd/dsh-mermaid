@@ -5,7 +5,7 @@
 [![MIT license](https://img.shields.io/github/license/Preference-cmd/dsh-mermaid)](./LICENSE)
 
 <!-- 最近一次验证的 DeepSeek Harness 版本；兼容性下限仍以 @deepseek-ai/dsh-tools 的 peerDependency 为准。 -->
-最近一次验证：DeepSeek Harness 0.2.2-rc.1，CI 以该版本执行 typecheck 与构建。
+最近一次验证：DeepSeek Harness 0.2.2-rc.1，CI 以该版本执行 typecheck 与构建，并以该版本的发布 tag 跑浏览器场景。
 
 面向 DeepSeek Harness 的 Mermaid 图表插件：模型经 `mermaid_render` 工具出图，图表以“会话中产物”常驻回合末尾，点开即得右侧边栏的缩放大画布。单包发布、自带渲染引擎，上游 DSH 无需任何改动。
 
@@ -36,18 +36,20 @@ dsh plugin --profile web add github:Preference-cmd/dsh-mermaid
 
 ## 兼容性
 
-插件源码在 DeepSeek Harness 0.2.1-alpha.2 至 0.2.2-rc.1 的每个已发布版本上都通过类型检查（逐版本验证）：宿主侧的工具契约与客户端侧的 slot 名在整个区间内没有变化。
+插件源码在 DeepSeek Harness 0.2.1-alpha.2 至 0.2.2-rc.1 的每个已发布版本上都通过类型检查（逐版本验证），插件用到的宿主工具契约与客户端 slot 名在整个区间内保持兼容。
 
 | 面 | 要求 |
 | --- | --- |
-| 宿主 | `@deepseek-ai/dsh-tools` ≥ 0.2.1-alpha.2 且 < 0.3.0 |
-| Cordis | `@deepseek-ai/cordis` ^4.0.5-alpha.1；0.2.1 系列要求 ~4.0.5，0.2.2 系列要求 ~4.1.0 |
+| 宿主 | `@deepseek-ai/dsh-tools`：`>=0.2.1-alpha.2 <0.3.0` 或 `^0.2.2-alpha.2` |
+| Cordis | `@deepseek-ai/cordis`：`^4.0.5-alpha.1` 或 `^4.0.6-alpha.1`；0.2.1 系列要求 ~4.0.5，0.2.2-alpha 系列要求 ~4.0.6-alpha.x，0.2.2-rc.1 要求 ~4.1.0 |
 | 客户端 | 宿主提供的 `@deepseek-ai/dsh-client-ui-slots` 等客户端包，插件不单独声明 |
 | React | 插件的 client bundle 把 React 标记为 external，实际运行在宿主客户端的 React 18 上 |
 
+peer 区间按 semver 的预发布规则分段写：带预发布标签的版本只能被同一 [major, minor, patch] 元组上的比较符满足，所以 `>=0.2.1-alpha.2 <0.3.0` 并不包含 `0.2.2-rc.1`，`^4.0.5-alpha.1` 也不包含 `4.0.6-alpha.1`。
+
 构建期的 `@types/react` 与宿主的 React 18 对齐。React 19 的 npm 包不带类型声明，类型全部来自 `@types/react`；与宿主错配时，宿主 slot 的类型重载会选到别的签名，表现为与运行时无关的类型错误。
 
-两道 CI 把上面的结论固定下来。`Host compatibility` 工作流在每次推送与 PR 上跑 `scripts/verify-version-matrix.mjs`，对区间内每个已发布版本逐版 typecheck；同一工作流在 `main` 推送与每周一次的计划任务上，把插件装进一份钉在发布 tag 上的 stock 上游检出，用浏览器跑 `tests/standalone-upstream.e2e.ts`——上游没有内置围栏渲染器，插件必须用自己的引擎把图画出来。
+类型检查覆盖整个区间；浏览器场景验证的是 0.2.2-rc.1（stock 上游与作者分支各跑一次）。两道 CI 把上面的结论固定下来。`Host compatibility` 工作流在每次推送与 PR 上跑 `scripts/verify-version-matrix.mjs`，对区间内每个已发布版本逐版 typecheck，并检查自己的 peer 区间确实放行这些宿主；同一工作流在 `main` 推送与每周一次的计划任务上，把插件装进一份钉在发布 tag 上的 stock 上游检出，用浏览器跑 `tests/standalone-upstream.e2e.ts`——上游没有内置围栏渲染器，插件必须用自己的引擎把图画出来。
 
 ## 许可证
 
