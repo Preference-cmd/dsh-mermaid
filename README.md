@@ -5,7 +5,7 @@
 [![MIT license](https://img.shields.io/github/license/Preference-cmd/dsh-mermaid)](./LICENSE)
 
 <!-- 最近一次验证的 DeepSeek Harness 版本；兼容性下限仍以 @deepseek-ai/dsh-tools 的 peerDependency 为准。 -->
-最近一次验证：DeepSeek Harness 0.2.1-rc.2，CI 以该版本执行 typecheck 与构建。
+最近一次验证：DeepSeek Harness 0.2.2-rc.1，CI 以该版本执行 typecheck 与构建。
 
 面向 DeepSeek Harness 的 Mermaid 图表插件：模型经 `mermaid_render` 工具出图，图表以“会话中产物”常驻回合末尾，点开即得右侧边栏的缩放大画布。单包发布、自带渲染引擎，上游 DSH 无需任何改动。
 
@@ -33,6 +33,19 @@ dsh plugin --profile web add github:Preference-cmd/dsh-mermaid
 ![带围栏渲染器的客户端里，助手手写的 mermaid 围栏直接成图](assets/fence-renderer.png)
 
 参考：[DeepSeek Harness 插件教程](https://deepseek-harness.github.io/deepseek-harness/develop/basic/publish)。
+
+## 兼容性
+
+插件源码在 DeepSeek Harness 0.2.1-alpha.2 至 0.2.2-rc.1 的每个已发布版本上都通过类型检查（逐版本验证）：宿主侧的工具契约与客户端侧的 slot 名在整个区间内没有变化。
+
+| 面 | 要求 |
+| --- | --- |
+| 宿主 | `@deepseek-ai/dsh-tools` ≥ 0.2.1-alpha.2 且 < 0.3.0 |
+| Cordis | `@deepseek-ai/cordis` ^4.0.5-alpha.1；0.2.1 系列要求 ~4.0.5，0.2.2 系列要求 ~4.1.0 |
+| 客户端 | 宿主提供的 `@deepseek-ai/dsh-client-ui-slots` 等客户端包，插件不单独声明 |
+| React | 插件的 client bundle 把 React 标记为 external，实际运行在宿主客户端的 React 18 上 |
+
+构建期的 `@types/react` 与宿主的 React 18 对齐。React 19 的 npm 包不带类型声明，类型全部来自 `@types/react`；与宿主错配时，宿主 slot 的类型重载会选到别的签名，表现为与运行时无关的类型错误。
 
 ## 许可证
 
