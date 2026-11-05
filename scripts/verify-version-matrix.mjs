@@ -121,7 +121,9 @@ try {
   for (const [dsh, cordis] of candidates) {
     writeWorkspace(dsh, cordis, exclude)
     try {
-      execFileSync('pnpm', ['install', '--reporter=append-only'], { cwd: root, stdio: 'inherit' })
+      // The overrides make the lockfile stale by construction, so the frozen
+      // install pnpm turns on under CI has to be turned off explicitly.
+      execFileSync('pnpm', ['install', '--no-frozen-lockfile', '--reporter=append-only'], { cwd: root, stdio: 'inherit' })
     } catch (error) {
       results.push({ dsh, cordis, outcome: 'install failed', detail: String(error) })
       continue
