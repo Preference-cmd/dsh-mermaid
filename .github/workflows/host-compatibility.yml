@@ -1,0 +1,110 @@
+name: Host compatibility
+
+# Two checks against the DeepSeek Harness the plugin runs inside:
+#
+# - version-matrix: the plugin source typechecks against every published
+#   harness release in the range the README claims. It only resolves published
+#   packages, so it is cheap enough to gate every push.
+# - upstream-host: the plugin's browser half runs against a stock upstream
+#   release, where no host renders Mermaid fences and the plugin must draw the
+#   diagram with its own engine. It clones and builds the whole harness, so it
+#   runs on main and on a schedule rather than on every pull request.
+#
+# The upstream job pins the harness release tag, so an unrelated upstream
+# commit cannot turn this repository's check red; a new harness release is
+# adopted by moving UPSTREAM_RELEASE and re-recording the matrix.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # 03:23 UTC Monday — off the hour, so the job does not queue behind the
+    # upstream repository's own scheduled workflows.
+    - cron: '23 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version-matrix:
+    name: typecheck against every published harness version
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The matrix resolves each published harness release and typechecks the
+      # plugin source against it; the manifest and lockfile are restored
+      # afterwards.
+      - run: node scripts/verify-version-matrix.mjs
+
+  upstream-host:
+    name: browser scenario against a stock upstream harness
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # A pull request only needs the cheap matrix; this job clones and builds
+    # the whole harness, so it runs on main, on the schedule, and on demand.
+    if: github.event_name != 'pull_request'
+    env:
+      UPSTREAM_RELEASE: dsh-v0.2.2-rc.1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The plugin ships its build output, so the upstream harness installs the
+      # artifact this job publishes rather than the sources.
+      - run: pnpm run build
+
+      - name: Check out the upstream harness release
+        run: |
+          git clone --depth 1 --branch "$UPSTREAM_RELEASE" \
+            https://github.com/deepseek-ai/deepseek-harness.git ../upstream-harness
+
+      # The web scenario drives the built client, so the harness needs its
+      # artifacts before the browser lane can run. Both installs share the one
+      # pnpm store the cache step above set up.
+      - name: Install and build the upstream harness
+        working-directory: ../upstream-harness
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build:artifacts
+
+      - name: Install Playwright Chromium
+        working-directory: ../upstream-harness
+        run: pnpm --filter @deepseek-ai/dsh-web-frontend exec playwright install --with-deps chromium
+
+      # The plugin is mounted into the harness as a package directory, the way
+      # a user installs it, and the scenario runs beside the harness's own web
+      # tests.
+      - name: Stage the plugin and its scenario
+        run: |
+          mkdir -p ../upstream-harness/plugins/dsh-mermaid
+          rsync -a --exclude node_modules --exclude .git --exclude tests ./ ../upstream-harness/plugins/dsh-mermaid/
+          cp tests/standalone-upstream.e2e.ts ../upstream-harness/apps/web/tests/standalone-upstream.e2e.ts
+
+      - name: Run the standalone scenario
+        working-directory: ../upstream-harness
+        run: npx vitest run --config vitest.web.config.ts apps/web/tests/standalone-upstream.e2e.ts

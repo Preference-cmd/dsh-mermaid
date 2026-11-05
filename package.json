@@ -42,7 +42,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "verify:build-output": "node scripts/verify-build-output.mjs"
+    "verify:build-output": "node scripts/verify-build-output.mjs",
+    "verify:version-matrix": "node scripts/verify-version-matrix.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.5-alpha.1",

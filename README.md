@@ -47,6 +47,8 @@ dsh plugin --profile web add github:Preference-cmd/dsh-mermaid
 
 构建期的 `@types/react` 与宿主的 React 18 对齐。React 19 的 npm 包不带类型声明，类型全部来自 `@types/react`；与宿主错配时，宿主 slot 的类型重载会选到别的签名，表现为与运行时无关的类型错误。
 
+两道 CI 把上面的结论固定下来。`Host compatibility` 工作流在每次推送与 PR 上跑 `scripts/verify-version-matrix.mjs`，对区间内每个已发布版本逐版 typecheck；同一工作流在 `main` 推送与每周一次的计划任务上，把插件装进一份钉在发布 tag 上的 stock 上游检出，用浏览器跑 `tests/standalone-upstream.e2e.ts`——上游没有内置围栏渲染器，插件必须用自己的引擎把图画出来。
+
 ## 许可证
 
 本项目以 [MIT](./LICENSE) 许可证发布。
