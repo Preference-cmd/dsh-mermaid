@@ -83,15 +83,9 @@ jobs:
           git clone --depth 1 --branch "$UPSTREAM_RELEASE" \
             https://github.com/deepseek-ai/deepseek-harness.git ../upstream-harness
 
-      - name: Cache the upstream harness dependencies
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: pnpm
-          cache-dependency-path: ../upstream-harness/pnpm-lock.yaml
-
       # The web scenario drives the built client, so the harness needs its
-      # artifacts before the browser lane can run.
+      # artifacts before the browser lane can run. Both installs share the one
+      # pnpm store the cache step above set up.
       - name: Install and build the upstream harness
         working-directory: ../upstream-harness
         run: |
