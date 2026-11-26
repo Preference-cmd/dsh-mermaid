@@ -2,7 +2,7 @@
  * Typecheck the plugin source against every published harness release line.
  *
  * The README claims the plugin source compiles from 0.2.1-alpha.2 through
- * 0.2.2-rc.1. This check makes that claim mechanical: for each published
+ * 0.2.3-alpha.2. This check makes that claim mechanical: for each published
  * version it pins the direct devDependencies to it, lets the harness packages
  * pull their own pinned peers, and runs the typecheck against the real
  * published types. The override covers only the packages the plugin develops
@@ -51,6 +51,12 @@ const VERSIONS = [
   ['0.2.2-alpha.2', '4.0.6-alpha.1'],
   ['0.2.2-alpha.3', '4.0.6-alpha.2'],
   ['0.2.2-rc.1', '4.1.0'],
+  ['0.2.2-rc.2', '4.1.0'],
+  ['0.2.2-rc.3', '4.1.0'],
+  ['0.2.2-rc.4', '4.1.0'],
+  ['0.2.2-rc.5', '4.1.0'],
+  ['0.2.3-alpha.1', '4.1.0'],
+  ['0.2.3-alpha.2', '4.2.0-alpha.1'],
 ]
 
 /** The packages the plugin develops against; the harness packages pin their own peers. */
