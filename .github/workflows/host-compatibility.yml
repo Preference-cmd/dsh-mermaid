@@ -61,7 +61,7 @@ jobs:
     # the whole harness, so it runs on main, on the schedule, and on demand.
     if: github.event_name != 'pull_request'
     env:
-      UPSTREAM_RELEASE: dsh-v0.2.2-rc.1
+      UPSTREAM_RELEASE: dsh-v0.2.3-alpha.2
     steps:
       - uses: actions/checkout@v4
 
